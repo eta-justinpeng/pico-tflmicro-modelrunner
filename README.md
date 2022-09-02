@@ -1,69 +1,67 @@
+# Pico TensorFlow Lite Micro Model Runner
 
-# TensorFlow Lite Micro
-
-An Open Source Machine Learning Framework for Everyone.
-
-## Introduction
-
-This is a version of the [TensorFlow Lite Micro library](https://www.tensorflow.org/lite/microcontrollers)
-for the Raspberry Pi Pico microcontroller. It allows you to run machine learning models to
-do things like voice recognition, detect people in images, recognize gestures from an accelerometer,
-and other sensor analysis tasks.
-
-## Getting Started
-
-First you'll need to follow the Pico setup instructions to initialize the development
-environment on your machine. Once that is done, make sure that the PICO_SDK_PATH
-environment variable has been set to the location of the Pico SDK, either in the shell
-you're building in, or the CMake configure environment variable setting of the extension
-if you're using VS Code.
-
-You should then be able to build the library, tests, and examples. The easiest way to
-build is using VS Code's CMake integration, by loading the project and choosing the
-build option at the bottom of the window.
-
-## What's Included
-
-There are several example applications included. The simplest one to begin with is the
-hello_world project. This demonstrates the fundamentals of deploying an ML model on a
-device, driving the Pico's LED in a learned sine-wave pattern.
-
-Other examples include simple speech recognition, a magic wand gesture recognizer,
-and spotting people in camera images, but because they require audio, accelerometer or
-image inputs you'll need to write some code to hook up your own sensors, since these
-are not included with the base microcontroller.
-
-## Contributing
-
-This repository (https://github.com/raspberrypi/pico-tflmicro) is read-only, because
-it has been automatically generated from the master TensorFlow repository at
-https://github.com/tensorflow/tensorflow. This means that all issues and pull requests
-need to be filed there. You can generate a version of this generated project by
-running the commands:
+## Setting up dependencies
+Install the prerequisites for the Pico C/C++ SDK in the parent folder
 
 ```
-git clone https://github.com/tensorflow/tensorflow
-cd tensorflow
-tensorflow/lite/micro/tools/project/generate.py rp2 pico-tflmicro
+cd ..
+sudo apt update
+sudo apt install git cmake gcc-arm-none-eabi gcc g++ libstdc++-arm-none-eabi-newlib
+sudo apt install automake autoconf build-essential texinfo libtool libftdi-dev libusb-1.0-0-dev
 ```
 
-This should create a Pico-compatible project from the latest version of the TensorFlow
-repository.
+In the parent folder, download the Pico C/C++ Repository and update the SDK
 
-## Learning More
+```
+git clone -b master https://github.com/raspberrypi/pico-sdk.git
+cd pico-sdk
+git submodule update --init
+```
 
-The [TensorFlow website](https://www.tensorflow.org/lite/microcontrollers) has
-information on training, tutorials, and other resources.
+Set the PICO_SDK_PATH environment variable to the installation directory of the pico-sdk
 
-The [TinyML Book](https://tinymlbook.com) is a guide to using TensorFlow Lite Micro
-across a variety of different systems.
+## Compiling the model
+To run a model, first convert a tflite model to a .cpp file using xxd:
 
-[TensorFlowLite Micro: Embedded Machine Learning on TinyML Systems](https://arxiv.org/pdf/2010.08678.pdf)
-has more details on the design and implementation of the framework.
+```
+xxd -i your_model.tflite > model.cpp
+```
 
-## Licensing
+Add the model.cpp file to pico-tflmicro-modelrunner/examples/model_runner
 
-The TensorFlow source code is covered by the license described in src/tensorflow/LICENSE,
-components from other libraries have the appropriate licenses included in their
-third_party folders.
+Create a cmake build folder in the pico-tflmicro-modelrunner directory
 
+```
+cd pico-tflmicro-modelrunner
+mkdir build && cd build
+cmake ..
+```
+
+To build the model_runner navigate to the examples folder:
+
+```
+cd examples
+cd model_runner
+```
+
+Build the .uf2 binary
+
+```
+make
+```
+
+## Running the model on the pico
+
+Plug in the pico while holding in the BOOTSEL button
+
+Once the device appears, copy the model_runner.uf2 file to the device
+
+Afterwards, the pico should unmount itself and restart.
+
+To view output, use a serial terminal with a baud rate of 115200
+
+## Some notes
+
+The datatype for different models may need to be changed. To do this, change the int8_t datatypes in main_functions.cpp to whatever is required
+
+Currently the model runner generates a random input. The random seed can be changed to further change the output. Or the input tensors could be added to a header file.
